@@ -1,0 +1,77 @@
+name: Build & Deploy Container to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy-to-ec2:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Execute Remote SSH Commands on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # 1. Log in to GHCR on EC2 using GitHub Token passed as environment variable
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # 2. Pull latest container image
+            docker pull ghcr.io/${{ github.repository }}:latest
+
+            # 3. Stop and remove existing container (if running)
+            docker stop aws-3tier-container || true
+            docker rm aws-3tier-container || true
+
+            # 4. Run new container on port 8080 using EC2's persistent .env file
+            docker run -d \
+              --name aws-3tier-container \
+              --restart unless-stopped \
+              -p 8080:8080 \
+              --env-file /home/ubuntu/AWS_3TIER/.env \
+              ghcr.io/${{ github.repository }}:latest
+
+            # 5. Reload Nginx reverse proxy
+            sudo systemctl reload nginx

@@ -1,0 +1,7 @@
+streamlit
+boto3
+pymysql
+pandas
+python-dotenv
+plotly
+psutil
