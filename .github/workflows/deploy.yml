@@ -4,10 +4,11 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: myamin-usa/aws_3tier
 
 jobs:
   build-and-push:
@@ -55,11 +56,11 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # 1. Log in to GHCR on EC2 using GitHub Token passed as environment variable
+            # 1. Log in to GHCR on EC2
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             # 2. Pull latest container image
-            docker pull ghcr.io/${{ github.repository }}:latest
+            docker pull ghcr.io/myamin-usa/aws_3tier:latest
 
             # 3. Stop and remove existing container (if running)
             docker stop aws-3tier-container || true
@@ -71,7 +72,7 @@ jobs:
               --restart unless-stopped \
               -p 8080:8080 \
               --env-file /home/ubuntu/AWS_3TIER/.env \
-              ghcr.io/${{ github.repository }}:latest
+              ghcr.io/myamin-usa/aws_3tier:latest
 
             # 5. Reload Nginx reverse proxy
             sudo systemctl reload nginx
