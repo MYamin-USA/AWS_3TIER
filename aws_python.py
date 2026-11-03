@@ -1,44 +1,41 @@
-import streamlit as st
+import os
+import pathlib
+from datetime import datetime
 import pandas as pd
 import plotly.express as px
-from datetime import datetime
 import psutil
-import os
+import streamlit as st
 from dotenv import load_dotenv
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 # Amazon RDS Database Manager Integration
 import db_manager
 
 # ==========================================
-# ENVIRONMENT CONFIGURATION (Ubuntu + Windows Dual Compatibility)
+# ENVIRONMENT CONFIGURATION (Cross-Platform Compatibility)
 # ==========================================
 load_dotenv()
 
-local_env_paths = [
-    os.path.join(os.path.dirname(__file__), ".env"),  # Relative script directory
-    r"C:\Users\yamin\pythonprojects\secrets\portal\.env", # Windows local workspace path
-]
+# Use safe relative pathing without leaking local OS usernames
+base_dir = pathlib.Path(__file__).resolve().parent
+local_env = base_dir / ".env"
+if local_env.exists():
+  load_dotenv(dotenv_path=local_env, override=False)
 
-for env_path in local_env_paths:
-    if os.path.exists(env_path):
-        load_dotenv(dotenv_path=env_path, override=False)
+# Load public IP dynamically from environment variable (defaults to placeholder if not set)
+EC2_PUBLIC_IP = os.getenv("EC2_PUBLIC_IP", "Protected Node")
 
 # ==========================================
 # 1. PAGE CONFIGURATION
 # ==========================================
 st.set_page_config(
-    page_title="Yamin | Cloud DevOps Portfolio", 
-    page_icon="☁️", 
-    layout="wide"
+    page_title="Yamin | Cloud DevOps Portfolio", page_icon="☁️", layout="wide"
 )
 
 # ==========================================
 # 2. GLOBAL STYLING & TOP WHITESPACE REMOVAL (CSS)
 # ==========================================
-st.markdown("""
+st.markdown(
+    """
     <style>
     /* -------------------------------------------------------------
        1. ELIMINATE TOP EMPTY SPACE ACROSS ALL PAGES & SIDEBAR
@@ -98,38 +95,41 @@ st.markdown("""
         margin-bottom: 15px;
     }
     </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # ==========================================
 # 3. SIDEBAR NAVIGATION HUB
 # ==========================================
 with st.sidebar:
-    st.markdown("## ⚙️ Yamin DevOps Portal")
-    
-    menu = [
-        "👤 Profile", 
-        "💼 Portfolio", 
-        "🚀 Portal Tech",
-        "🛠️ AWS Engine", 
-        "🛒 E-Commerce", 
-        "🤖 Gemini AI", 
-        "📬 Contact"
-    ]
-    choice = st.radio("Navigation Hub:", menu)
-    st.markdown("---")
-    st.caption("Deployment Environment: Cross-Platform")
-    st.caption("Supported Hosts: AWS EC2 Ubuntu / Windows 11 Local")
+  st.markdown("## ⚙️ Yamin DevOps Portal")
+
+  menu = [
+      "👤 Profile",
+      "💼 Portfolio",
+      "🚀 Portal Tech",
+      "🛠️ AWS Engine",
+      "🛒 E-Commerce",
+      "🤖 Gemini AI",
+      "📬 Contact",
+  ]
+  choice = st.radio("Navigation Hub:", menu)
+  st.markdown("---")
+  st.caption("Deployment Environment: Cross-Platform")
+  st.caption("Supported Hosts: AWS EC2 Ubuntu / Windows Local")
 
 # ==========================================
 # 4. PAGE 1: PROFESSIONAL PROFILE
 # ==========================================
 if choice == "👤 Profile":
-    st.title("👤 Cloud DevOps & Infrastructure Engineer")
-    
-    col1, col2 = st.columns([1, 2])
-    
-    with col1:
-        st.markdown("""
+  st.title("👤 Cloud DevOps & Infrastructure Engineer")
+
+  col1, col2 = st.columns([1, 2])
+
+  with col1:
+    st.markdown(
+        """
         <div class="profile-card">
             <h3 style='margin-top:0; color:#FF9900;'>Yamin</h3>
             <p><b>Role:</b> Cloud & Telecom Specialist</p>
@@ -137,73 +137,98 @@ if choice == "👤 Profile":
             <p><b>Core Domains:</b> Systems Automation, CI/CD Pipelines</p>
             <p><b>Languages:</b> English, Spanish, Urdu, Hindi, Punjabi</p>
         </div>
-        """, unsafe_allow_html=True)
-        
-        st.info("💡 **Focus Area:** Building highly resilient, auto-deployed, secure cloud systems using infrastructure code frameworks.")
-        st.success("⚡ CI/CD Automation Active: Auto-deployed via GitHub Actions!")
-    with col2:
-        st.markdown("<h3 class='section-header'>Executive Summary</h3>", unsafe_allow_html=True)
-        st.write("""
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.info(
+        "💡 **Focus Area:** Building highly resilient, auto-deployed, secure"
+        " cloud systems using infrastructure code frameworks."
+    )
+    st.success("⚡ CI/CD Automation Active: Auto-deployed via GitHub Actions!")
+  with col2:
+    st.markdown(
+        "<h3 class='section-header'>Executive Summary</h3>",
+        unsafe_allow_html=True,
+    )
+    st.write("""
         Dedicated IT professional with over **10 years of experience** spanning Telecom, Help Desk, 
         and Mobility Specialization. Proven track record in designing and maintaining complex network 
         infrastructures. Now transitioning into **AWS Cloud Engineering**, leveraging deep expertise 
         in Python automation, OOP architecture, and serverless computing.
         """)
-        
-        st.markdown("<h3 class='section-header'>Technical Proficiency Matrix</h3>", unsafe_allow_html=True)
-        df_skills = pd.DataFrame({
-            "Category": ["Cloud (AWS)", "Programming (Python)", "Networking (CCNA)", "E-Commerce Systems"],
-            "Proficiency": [85, 92, 98, 90]
-        })
-        fig = px.bar(
-            df_skills, 
-            x="Proficiency", 
-            y="Category", 
-            orientation='h', 
-            color="Proficiency", 
-            color_continuous_scale="Oranges"
-        )
-        fig.update_layout(
-            height=250, 
-            plot_bgcolor='rgba(0,0,0,0)', 
-            paper_bgcolor='rgba(0,0,0,0)',
-            margin=dict(l=20, r=20, t=20, b=20)
-        )
-        st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown(
+        "<h3 class='section-header'>Technical Proficiency Matrix</h3>",
+        unsafe_allow_html=True,
+    )
+    df_skills = pd.DataFrame({
+        "Category": [
+            "Cloud (AWS)",
+            "Programming (Python)",
+            "Networking (CCNA)",
+            "E-Commerce Systems",
+        ],
+        "Proficiency": [85, 92, 98, 90],
+    })
+    fig = px.bar(
+        df_skills,
+        x="Proficiency",
+        y="Category",
+        orientation="h",
+        color="Proficiency",
+        color_continuous_scale="Oranges",
+    )
+    fig.update_layout(
+        height=250,
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=20, r=20, t=20, b=20),
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 # ==========================================
 # 5. PAGE 2: PROFESSIONAL PORTFOLIO
 # ==========================================
 elif choice == "💼 Portfolio":
-    st.title("💼 Professional Infrastructure & DevOps Portfolio")
-    st.caption("AWS Certified Solutions Architect | 10+ Years Enterprise IT & Networking | AI Solutions Consultant")
+  st.title("💼 Professional Infrastructure & DevOps Portfolio")
+  st.caption(
+      "AWS Certified Solutions Architect | 10+ Years Enterprise IT & Networking"
+      " | AI Solutions Consultant"
+  )
 
-    # Top Executive Summary Metrics (Compact text size via CSS)
-    m1, m2, m3, m4 = st.columns(4)
-    with m1:
-        st.metric(label="Total Experience", value="10+ Years", delta="Enterprise Systems")
-    with m2:
-        st.metric(label="Primary Cloud", value="AWS Certified", delta="Solutions Architect")
-    with m3:
-        st.metric(label="Certifications", value="3 Core Badges", delta="AWS | Cisco | Microsoft")
-    with m4:
-        st.metric(label="Education", value="BS in IT", delta="Virtual University")
+  # Top Executive Summary Metrics (Compact text size via CSS)
+  m1, m2, m3, m4 = st.columns(4)
+  with m1:
+    st.metric(
+        label="Total Experience", value="10+ Years", delta="Enterprise Systems"
+    )
+  with m2:
+    st.metric(
+        label="Primary Cloud", value="AWS Certified", delta="Solutions Architect"
+    )
+  with m3:
+    st.metric(
+        label="Certifications", value="3 Core Badges", delta="AWS | Cisco | Microsoft"
+    )
+  with m4:
+    st.metric(label="Education", value="BS in IT", delta="Virtual University")
 
-    st.markdown("---")
+  st.markdown("---")
 
-    # Tabs
-    tab_skills, tab_history, tab_certs, tab_overview = st.tabs([
-        "🛠️ Technical Matrix",
-        "💼 Employment History",
-        "🎓 Certifications & Education",
-        "🚀 Services & Overview"
-    ])
+  # Tabs
+  tab_skills, tab_history, tab_certs, tab_overview = st.tabs([
+      "🛠️ Technical Matrix",
+      "💼 Employment History",
+      "🎓 Certifications & Education",
+      "🚀 Services & Overview",
+  ])
 
-    # TAB 1: TECHNICAL MATRIX
-    with tab_skills:
-        st.subheader("🛠️ Technical Skill Matrix & Engineering Capabilities")
+  # TAB 1: TECHNICAL MATRIX
+  with tab_skills:
+    st.subheader("🛠️ Technical Skill Matrix & Engineering Capabilities")
 
-        st.markdown("""
+    st.markdown("""
         | Technology Domain | Primary Tools & Frameworks | Proficiency Level |
         | :--- | :--- | :--- |
         | **Cloud Infrastructure (IaaS)** | AWS EC2, Amazon RDS, S3, IAM, Bedrock AI, Lambda, Security Groups | Expert |
@@ -216,12 +241,12 @@ elif choice == "💼 Portfolio":
         | **Directory & Mobility** | Microsoft Active Directory, XenMobile MDM, Enterprise VPN | Proficient |
         """)
 
-    # TAB 2: EMPLOYMENT HISTORY
-    with tab_history:
-        st.subheader("💼 Career Trajectory & Employment History")
-        
-        st.markdown("### 📊 Career Timeline Summary")
-        st.markdown("""
+  # TAB 2: EMPLOYMENT HISTORY
+  with tab_history:
+    st.subheader("💼 Career Trajectory & Employment History")
+
+    st.markdown("### 📊 Career Timeline Summary")
+    st.markdown("""
         | Period | Role Title | Organization | Core Domain Focus |
         | :--- | :--- | :--- | :--- |
         | **2025 – Present** | AWS Cloud & DevOps Engineer | Self-Employed / Consulting | AWS EC2/RDS, CI/CD, Nginx, AI Agents |
@@ -233,11 +258,15 @@ elif choice == "💼 Portfolio":
         | **2005 – 2009** | Infrastructure & Switch Admin | Lunavoz Telecom SL | Artilium ISDN Switch, Carrier Interconnects |
         """)
 
-        st.markdown("---")
-        st.markdown("### 🔍 Detailed Responsibilities & Accomplishments")
+    st.markdown("---")
+    st.markdown("### 🔍 Detailed Responsibilities & Accomplishments")
 
-        with st.expander("☁️ AWS Cloud & DevOps Engineer / AI Consultant | Self-Employed (June 2025 – Present)", expanded=True):
-            st.markdown("""
+    with st.expander(
+        "☁️ AWS Cloud & DevOps Engineer / AI Consultant | Self-Employed (June"
+        " 2025 – Present)",
+        expanded=True,
+    ):
+      st.markdown("""
             * **Cloud Architecture:** Architecting and optimizing cloud infrastructure on AWS (EC2, S3, RDS, IAM, Bedrock AI, Lambda, Security Groups).
             * **CI/CD Automation:** Setting up automated CI/CD pipelines via GitHub Actions for seamless deployment directly from Windows/VS Code to AWS.
             * **Reverse Proxy & SSL:** Configuring Ubuntu Linux servers with Nginx reverse proxies, SSL/TLS certificates (Certbot), and DuckDNS domain mapping.
@@ -245,53 +274,70 @@ elif choice == "💼 Portfolio":
             * **DevOps Hardening:** Managing AWS cost & billing optimization, isolated secrets management (`.env`), SSH security, and systemd daemons.
             """)
 
-        with st.expander("🛒 E-Commerce Systems Manager | Daraz.pk (Jan 2023 – May 2025)"):
-            st.markdown("""
+    with st.expander(
+        "🛒 E-Commerce Systems Manager | Daraz.pk (Jan 2023 – May 2025)"
+    ):
+      st.markdown("""
             * Managed e-commerce web platform operations, store administration, and database management for online retail workflows.
             * Optimized product listings, catalog data structures, and inventory tracking systems using MySQL and custom scripting.
             * Ensured high availability, resolved site performance issues, and configured secure order processing workflows.
             """)
 
-        with st.expander("🌐 E-Commerce Systems & Network Infrastructure Lead | E-Com & Telecom Solutions (Jan 2018 – Nov 2022)"):
-            st.markdown("""
+    with st.expander(
+        "🌐 E-Commerce Systems & Network Infrastructure Lead | E-Com & Telecom"
+        " Solutions (Jan 2018 – Nov 2022)"
+    ):
+      st.markdown("""
             * Architected and deployed end-to-end e-commerce database solutions, web portals, and shopping cart systems for retail client projects.
             * Configured and managed online VoIP system and calling card solutions, and switch platform routing.
             * Handled MySQL database optimization, PHP/Web, HTML customization, network hardware configuration, and infrastructure security management.
             """)
 
-        with st.expander("📱 Help Desk Analyst & Enterprise Mobility Specialist | HMSHost (Sep 2016 – Apr 2017)"):
-            st.markdown("""
+    with st.expander(
+        "📱 Help Desk Analyst & Enterprise Mobility Specialist | HMSHost (Sep"
+        " 2016 – Apr 2017)"
+    ):
+      st.markdown("""
             * Managed enterprise mobility infrastructure, Active Directory accounts, and secure VPN access for over **3,000 employees**.
             * Enrolled and configured mobile devices via XenMobile MDM, built custom MS Access tracking systems, and resolved complex LAN/WAN network and remote connectivity issues.
             """)
 
-        with st.expander("☎️ IT Systems & Network Support Specialist | COLT Telecomunicaciones SA (Mar 2014 – Apr 2016)"):
-            st.markdown("""
+    with st.expander(
+        "☎️ IT Systems & Network Support Specialist | COLT Telecomunicaciones SA"
+        " (Mar 2014 – Apr 2016)"
+    ):
+      st.markdown("""
             * Provided Tier-2 systems and enterprise network support across Windows Server and Active Directory environments.
             * Configured local network hardware, remote access VPNs, and router routing protocols while maintaining strict SLA uptime metrics.
             """)
 
-        with st.expander("🖥️ Microsoft Systems & Network Technician | Welcome Siglo 21 SL (Apr 2010 – Dec 2013)"):
-            st.markdown("""
+    with st.expander(
+        "🖥️ Microsoft Systems & Network Technician | Welcome Siglo 21 SL (Apr"
+        " 2010 – Dec 2013)"
+    ):
+      st.markdown("""
             * Engineered and maintained LAN/WAN network infrastructure, central server systems, and client workstations for internet retail centers.
             * Performed Windows OS deployments, hardware maintenance, and Microsoft application suite configurations.
             """)
 
-        with st.expander("🔄 IT Infrastructure & Switch Administrator | Lunavoz Telecom SL (Jan 2005 – Dec 2009)"):
-            st.markdown("""
+    with st.expander(
+        "🔄 IT Infrastructure & Switch Administrator | Lunavoz Telecom SL (Jan"
+        " 2005 – Dec 2009)"
+    ):
+      st.markdown("""
             * Managed Artilium ISDN switch platforms, VoIP routing infrastructure, and core network configurations.
             * Coordinated CLI activations, carrier interconnects with Tier-1 telecom providers (BT, Orange, Telefónica), and server hardware maintenance.
             """)
 
-    # TAB 3: CERTIFICATIONS & EDUCATION
-    with tab_certs:
-        st.subheader("🎓 Credentials, Certifications & Education")
+  # TAB 3: CERTIFICATIONS & EDUCATION
+  with tab_certs:
+    st.subheader("🎓 Credentials, Certifications & Education")
 
-        col_c1, col_c2 = st.columns(2)
+    col_c1, col_c2 = st.columns(2)
 
-        with col_c1:
-            st.markdown("### 📜 Professional Industry Certifications")
-            st.markdown("""
+    with col_c1:
+      st.markdown("### 📜 Professional Industry Certifications")
+      st.markdown("""
             | Certification Badge | Issuing Body | Issue Date | Status |
             | :--- | :--- | :--- | :--- |
             | **AWS Certified Solutions Architect - Associate** | AWS Training & Certification | May 2025 | Active / Verified |
@@ -299,46 +345,51 @@ elif choice == "💼 Portfolio":
             | **Cisco Certified Network Associate (CCNA)** | Cisco Systems, Inc | March 2011 | Active / Verified |
             """)
 
-        with col_c2:
-            st.markdown("### 🎓 Academic Degree")
-            with st.container(border=True):
-                st.markdown("#### **Bachelor of Science in Information Technology (BS IT)**")
-                st.markdown("**Institution:** Virtual University of Pakistan")
-                st.markdown("**Period:** 2007 – 2011")
-                st.markdown("**Focus:** Computer Science, Software Engineering, Database Systems & Network Communications")
+    with col_c2:
+      st.markdown("### 🎓 Academic Degree")
+      with st.container(border=True):
+        st.markdown(
+            "#### **Bachelor of Science in Information Technology (BS IT)**"
+        )
+        st.markdown("**Institution:** Virtual University of Pakistan")
+        st.markdown("**Period:** 2007 – 2011")
+        st.markdown(
+            "**Focus:** Computer Science, Software Engineering, Database Systems"
+            " & Network Communications"
+        )
 
-    # TAB 4: SERVICES & OVERVIEW
-    with tab_overview:
-        st.subheader("🚀 Services & Executive Overview")
-        st.write("""
+  # TAB 4: SERVICES & OVERVIEW
+  with tab_overview:
+    st.subheader("🚀 Services & Executive Overview")
+    st.write("""
         As a **Cloud & DevOps Engineer with over 10 years of cross-functional IT and networking experience**, 
         I help businesses, remote teams, and engineering leaders deploy scalable cloud infrastructure, secure Linux environments, 
         and build automated deployment pipelines.
         """)
-        
-        st.markdown("### 🛠️ On-Demand Client Services & Solutions")
-        
-        col_s1, col_s2 = st.columns(2)
-        with col_s1:
-            with st.container(border=True):
-                st.markdown("#### ☁️ AWS & Cloud Infrastructure Setup")
-                st.markdown("""
+
+    st.markdown("### 🛠️ On-Demand Client Services & Solutions")
+
+    col_s1, col_s2 = st.columns(2)
+    with col_s1:
+      with st.container(border=True):
+        st.markdown("#### ☁️ AWS & Cloud Infrastructure Setup")
+        st.markdown("""
                 * **EC2 & Security:** Launching instances, configuring IAM roles, security group firewall policies, and SSH key management.
                 * **DNS & Domain Mapping:** Custom domain routing using Route 53, DuckDNS, and CNAME/A record management.
                 * **Managed Databases:** Amazon RDS (MySQL/PostgreSQL) database provisioning, connection handling, and security.
                 """)
-        
-        with col_s2:
-            with st.container(border=True):
-                st.markdown("#### 🔒 Web Server, SSL & Application Hardening")
-                st.markdown("""
+
+    with col_s2:
+      with st.container(border=True):
+        st.markdown("#### 🔒 Web Server, SSL & Application Hardening")
+        st.markdown("""
                 * **Nginx Reverse Proxy:** Eliminating non-standard port numbers (e.g., `:8501`) via clean Nginx reverse proxying on ports 80/443.
                 * **SSL/TLS Security:** Free automated SSL certificate installation via Certbot / Let's Encrypt with auto-renewal timers.
                 * **Daemon Automation:** Process management using `systemd` / `PM2` to guarantee auto-restart on reboots (`Restart=always`).
                 """)
 
-        st.markdown("### 🌐 Spoken Languages")
-        st.markdown("""
+    st.markdown("### 🌐 Spoken Languages")
+    st.markdown("""
         | Language | Proficiency Level |
         | :--- | :--- |
         | **English** | Fluent |
@@ -349,84 +400,87 @@ elif choice == "💼 Portfolio":
         """)
 
 # ==========================================
-# 6. PAGE 3: PORTAL TECH & FEATURES (NEW PAGE)
+# 6. PAGE 3: PORTAL TECH & FEATURES
 # ==========================================
 elif choice == "🚀 Portal Tech":
-    st.title("🚀 Portal DevOps Tech & Core Features")
-    st.markdown("An evaluation of the 10 key technical components, cloud architectures, and automation frameworks powering this live web app.")
+  st.title("🚀 Portal DevOps Tech & Core Features")
+  st.markdown(
+      "An evaluation of the 10 key technical components, cloud architectures,"
+      " and automation frameworks powering this live web app."
+  )
 
-    st.markdown("---")
+  st.markdown("---")
 
-    col_t1, col_t2 = st.columns(2)
+  col_t1, col_t2 = st.columns(2)
 
-    with col_t1:
-        with st.container(border=True):
-            st.markdown("### 🗄️ 1. Managed Amazon RDS (MySQL Database)")
-            st.write("""
+  with col_t1:
+    with st.container(border=True):
+      st.markdown("### 🗄️ 1. Managed Amazon RDS (MySQL Database)")
+      st.write("""
             * **Technology:** Amazon Relational Database Service (RDS), `pymysql` / `db_manager`.
             * **Function:** Provides high-availability relational data persistence for real-time inventory management, price calculations, and contact message logging.
             """)
 
-        with st.container(border=True):
-            st.markdown("### 📧 2. Native Python SMTP Email Engine")
-            st.write("""
+    with st.container(border=True):
+      st.markdown("### 📧 2. Native Python SMTP Email Engine")
+      st.write("""
             * **Technology:** Python `smtplib`, `MIMEText`, Port 465 (SSL/TLS).
             * **Function:** Decoupled direct email notification engine bypassing third-party relay limits to securely route contact form submissions to inboxes.
             """)
 
-        with st.container(border=True):
-            st.markdown("### 🔄 3. GitHub Actions CI/CD Pipeline")
-            st.write("""
+    with st.container(border=True):
+      st.markdown("### 🔄 3. GitHub Actions CI/CD Pipeline")
+      st.write("""
             * **Technology:** GitHub Actions, AWS EC2 Runner, SSH Automation.
             * **Function:** Automated continuous deployment pipeline that automatically pulls and deploys code changes onto the AWS EC2 host upon `git push`.
             """)
 
-        with st.container(border=True):
-            st.markdown("### 🤖 4. Gemini AI Intelligent Assistant")
-            st.write("""
+    with st.container(border=True):
+      st.markdown("### 🤖 4. Gemini AI Intelligent Assistant")
+      st.write("""
             * **Technology:** Natural Language Intent Parser & Knowledge Engine.
             * **Function:** Context-aware portfolio copilot answering client queries on qualifications, operational metrics, and cloud benchmarks.
             """)
 
-        with st.container(border=True):
-            st.markdown("### 📊 5. Live Host Telemetry & Resource Monitoring")
-            st.write("""
+    with st.container(border=True):
+      st.markdown("### 📊 5. Live Host Telemetry & Resource Monitoring")
+      st.write("""
             * **Technology:** Python `psutil` Library, OS Kernel Hooks.
             * **Function:** Fetches real-time server metrics directly from the host machine (CPU utilization, RAM allocation, disk usage, uptime).
             """)
 
-    with col_t2:
-        with st.container(border=True):
-            st.markdown("### 🔒 6. Nginx Reverse Proxy & SSL/TLS Encryption")
-            st.write("""
+  with col_t2:
+    with st.container(border=True):
+      st.markdown("### 🔒 6. Nginx Reverse Proxy & SSL/TLS Encryption")
+      st.write("""
             * **Technology:** Nginx Web Server, Let's Encrypt (`certbot`), DuckDNS.
             * **Function:** Routes incoming HTTPS requests on ports 80/443 to the Streamlit app port 8501, securing data in transit with free SSL certificates.
             """)
 
-        with st.container(border=True):
-            st.markdown("### 🔑 7. Isolated Secrets Management (`.env`)")
-            st.write("""
+    with st.container(border=True):
+      st.markdown("### 🔑 7. Isolated Secrets Management (`.env`)")
+      st.write("""
             * **Technology:** `python-dotenv`, AWS Security Groups, Environment Variables.
             * **Function:** Isolates database credentials, API keys, and mail passwords from source code, enabling seamless dual host compatibility (Windows local & Ubuntu EC2).
             """)
 
-        with st.container(border=True):
-            st.markdown("### 🖥️ 8. Streamlit Framework & Custom CSS Injection")
-            st.write("""
+    with st.container(border=True):
+      st.markdown("### 🖥️ 8. Streamlit Framework & Custom CSS Injection")
+      st.write("""
             * **Technology:** Streamlit, Injected Global CSS (`st.markdown`).
             * **Function:** Responsive frontend user interface with compact metric styling (~50% size reduction), zero top-whitespace padding, and dynamic layout routing.
             """)
 
-        with st.container(border=True):
-            st.markdown("### 📈 9. Interactive Data Visualization")
-            st.write("""
+    with st.container(border=True):
+      st.markdown("### 📈 9. Interactive Data Visualization")
+      st.write("""
             * **Technology:** Plotly Express (`plotly.express`), Pandas DataFrames.
             * **Function:** Renders dynamic horizontal bar charts, structured skill matrices, and live financial stock valuations directly in UI components.
             """)
 
-        with st.container(border=True):
-            st.markdown("### ⚙️ 10. Systemd / PM2 Daemon Process Management")
-            st.write("""
+    with st.container(border=True):
+      st.markdown("### ⚙️ 10. Systemd / PM2 Daemon Process Management")
+      st.write("""
             * **Technology:** Linux `systemd` Services / Background Daemons.
             * **Function:** Guarantees zero downtime by keeping the application active as a background daemon and automatically restarting it on server reboots.
             """)
@@ -435,56 +489,75 @@ elif choice == "🚀 Portal Tech":
 # 7. PAGE 4: AWS ENGINE (OPERATIONS)
 # ==========================================
 elif choice == "🛠️ AWS Engine":
-    st.title("🛠️ AWS Infrastructure Control Room")
-    st.markdown("Monitor and manage your cloud ecosystem. Utilize Boto3 integration frameworks for real-time telemetry reporting.")
+  st.title("🛠️ AWS Infrastructure Control Room")
+  st.markdown(
+      "Monitor and manage your cloud ecosystem. Utilize Boto3 integration"
+      " frameworks for real-time telemetry reporting."
+  )
 
-    tab_compute, tab_storage, tab_lambda = st.tabs([
-        "💻 Elastic Compute (EC2)", 
-        "🪣 Object Storage (S3)", 
-        "⚡ Serverless (Lambda)"
-    ])
+  tab_compute, tab_storage, tab_lambda = st.tabs([
+      "💻 Elastic Compute (EC2)",
+      "🪣 Object Storage (S3)",
+      "⚡ Serverless (Lambda)",
+  ])
 
-    with tab_compute:
-        st.subheader("EC2 Host Performance Management")
-        st.info("Current Instance Configuration: t3.micro (Linux/Ubuntu 22.04 LTS) | Public IP Node: 23.22.183.252")
-        
-        col_c1, col_c2 = st.columns(2)
-        with col_c1:
-            st.metric("Total Web Production Instances Running", "1", delta="Stable Cluster Status")
-        with col_c2:
-            if st.button("Refresh Host Telemetry"):
-                st.success("Compute Layer Integration Loop Connection: OPTIMAL")
-                
-        st.markdown("### 📊 Live Host Infrastructure Metrics (psutil)")
-        st.write("Real-time utilization percentages fetched directly from host kernel:")
-        
-        m1, m2, m3 = st.columns(3)
-        with m1:
-            cpu = psutil.cpu_percent(interval=0.5)
-            st.metric(label="Host CPU Load", value=f"{cpu}%")
-            st.progress(int(cpu))
-        with m2:
-            ram = psutil.virtual_memory()
-            st.metric(label="Assigned Memory Used", value=f"{ram.percent}%")
-            st.progress(int(ram.percent))
-        with m3:
-            disk = psutil.disk_usage('/')
-            st.metric(label="Root Storage Partition Used", value=f"{disk.percent}%")
-            st.progress(int(disk.percent))
-            
-        boot_time = datetime.fromtimestamp(psutil.boot_time())
-        st.caption(f"Server Persistence Uptime Tracking | Last Instance Boot Event: {boot_time.strftime('%Y-%m-%d %H:%M:%S')}")
+  with tab_compute:
+    st.subheader("EC2 Host Performance Management")
+    st.info(
+        f"Current Instance Configuration: t3.micro (Linux/Ubuntu 22.04 LTS) |"
+        f" Public IP Node: {EC2_PUBLIC_IP}"
+    )
 
-    with tab_storage:
-        st.subheader("S3 Data Storage Pipeline Layer")
-        bucket_name = st.text_input("Active Target Bucket Name:", "yamin-production-data-001")
-        st.progress(72, text="Target Bucket Storage Capacity Status: 72% Exhausted")
-        if st.button("Validate S3 Object Bucket Policy"):
-            st.warning("Storage Infrastructure Security Audit: AES-256 Server-Side Encryption Verified.")
+    col_c1, col_c2 = st.columns(2)
+    with col_c1:
+      st.metric(
+          "Total Web Production Instances Running",
+          "1",
+          delta="Stable Cluster Status",
+      )
+    with col_c2:
+      if st.button("Refresh Host Telemetry"):
+        st.success("Compute Layer Integration Loop Connection: OPTIMAL")
 
-    with tab_lambda:
-        st.subheader("Serverless Server Runtime Handler")
-        st.code("""
+    st.markdown("### 📊 Live Host Infrastructure Metrics (psutil)")
+    st.write("Real-time utilization percentages fetched directly from host kernel:")
+
+    m1, m2, m3 = st.columns(3)
+    with m1:
+      cpu = psutil.cpu_percent(interval=0.5)
+      st.metric(label="Host CPU Load", value=f"{cpu}%")
+      st.progress(int(cpu))
+    with m2:
+      ram = psutil.virtual_memory()
+      st.metric(label="Assigned Memory Used", value=f"{ram.percent}%")
+      st.progress(int(ram.percent))
+    with m3:
+      disk = psutil.disk_usage("/")
+      st.metric(label="Root Storage Partition Used", value=f"{disk.percent}%")
+      st.progress(int(disk.percent))
+
+    boot_time = datetime.fromtimestamp(psutil.boot_time())
+    st.caption(
+        "Server Persistence Uptime Tracking | Last Instance Boot Event:"
+        f" {boot_time.strftime('%Y-%m-%d %H:%M:%S')}"
+    )
+
+  with tab_storage:
+    st.subheader("S3 Data Storage Pipeline Layer")
+    bucket_name = st.text_input(
+        "Active Target Bucket Name:", "yamin-production-data-001"
+    )
+    st.progress(72, text="Target Bucket Storage Capacity Status: 72% Exhausted")
+    if st.button("Validate S3 Object Bucket Policy"):
+      st.warning(
+          "Storage Infrastructure Security Audit: AES-256 Server-Side Encryption"
+          " Verified."
+      )
+
+  with tab_lambda:
+    st.subheader("Serverless Server Runtime Handler")
+    st.code(
+        """
 # AWS Lambda Deployment Template - Python 3.12 Runtime
 def lambda_handler(event, context):
     try:
@@ -499,247 +572,189 @@ def lambda_handler(event, context):
             'statusCode': 500, 
             'body': f'Handler Exception Error: {str(e)}'
         }
-        """, language="python")
-        if st.button("Trigger Pipeline Event Mock Test"):
-            st.json({
-                "status": "executed", 
-                "runtime": "python3.12", 
-                "memory_allocation": "128MB",
-                "execution_duration_ms": "42.11"
-            })
+        """,
+        language="python",
+    )
+    if st.button("Trigger Pipeline Event Mock Test"):
+      st.json({
+          "status": "executed",
+          "runtime": "python3.12",
+          "memory_allocation": "128MB",
+          "execution_duration_ms": "42.11",
+      })
 
 # ==========================================
 # 8. PAGE 5: E-COMMERCE ENGINE (DIRECT AMAZON RDS CONNECTION)
 # ==========================================
 elif choice == "🛒 E-Commerce":
-    st.title("🛒 Inventory & Amazon RDS Persistence Engine")
-    st.markdown("Live relational database inventory integration powered by **Amazon RDS MySQL**.")
+  st.title("🛒 Inventory & Amazon RDS Persistence Engine")
+  st.markdown(
+      "Live relational database inventory integration powered by **Amazon RDS"
+      " MySQL**."
+  )
 
-    col_input, col_display = st.columns([1, 2])
-    
-    # --- FORM: COMMIT ASSET TO AMAZON RDS ---
-    with col_input:
-        with st.container(border=True):
-            st.subheader("Add Asset to RDS Database")
-            sku = st.text_input("SKU Identifier:", placeholder="e.g. TEL-SKU-101")
-            name = st.text_input("Product Name:", placeholder="e.g. Cisco IP Phone 8841")
-            category = st.selectbox("Category Group:", ["Electronics", "Telecom", "Hardware", "Retail"])
-            price = st.number_input("Unit Price ($):", min_value=0.0, step=0.01, value=150.00)
-            stock = st.number_input("Initial Stock Quantity:", min_value=0, step=1, value=25)
-            
-            if st.button("Commit to Amazon RDS Database"):
-                if sku and name:
-                    with st.spinner("Writing to Amazon RDS MySQL instance..."):
-                        success = db_manager.add_product(
-                            sku=sku, 
-                            name=name, 
-                            category=category, 
-                            price=price, 
-                            stock=stock
-                        )
-                        if success:
-                            st.success(f"🎉 Asset **{name}** successfully committed to RDS!")
-                        else:
-                            st.error("❌ Database Write Failure: Check your connection settings or duplicate SKU entries.")
-                else:
-                    st.warning("⚠️ Validation Warning: Please fill in both the SKU and Product Name.")
+  col_input, col_display = st.columns([1, 2])
 
-    # --- DISPLAY: FETCH LIVE INVENTORY FROM AMAZON RDS ---
-    with col_display:
-        st.subheader("Amazon RDS Live Inventory Table")
-        
-        products = db_manager.get_all_products()
-        
-        if products:
-            df_inv = pd.DataFrame(products)
-            
-            # Reorder display columns cleanly if present
-            expected_cols = ['id', 'sku', 'name', 'category', 'price', 'stock', 'created_at']
-            display_cols = [c for c in expected_cols if c in df_inv.columns]
-            if display_cols:
-                df_inv = df_inv[display_cols]
-                
-            st.dataframe(df_inv, use_container_width=True)
-            
-            # Live RDS Financial Telemetry
-            m_col1, m_col2, m_col3 = st.columns(3)
-            m_col1.metric("Unique Records", len(products))
-            
-            if 'stock' in df_inv.columns:
-                total_stock = df_inv['stock'].sum()
-                m_col2.metric("Total Items Stocked", int(total_stock))
-            
-            if 'price' in df_inv.columns and 'stock' in df_inv.columns:
-                total_val = (df_inv['price'] * df_inv['stock']).sum()
-                m_col3.metric("Inventory Valuation", f"${total_val:,.2f}")
+  # --- FORM: COMMIT ASSET TO AMAZON RDS ---
+  with col_input:
+    with st.container(border=True):
+      st.subheader("Add Asset to RDS Database")
+      sku = st.text_input("SKU Identifier:", placeholder="e.g. TEL-SKU-101")
+      name = st.text_input(
+          "Product Name:", placeholder="e.g. Cisco IP Phone 8841"
+      )
+      category = st.selectbox(
+          "Category Group:", ["Electronics", "Telecom", "Hardware", "Retail"]
+      )
+      price = st.number_input(
+          "Unit Price ($):", min_value=0.0, step=0.01, value=150.00
+      )
+      stock = st.number_input(
+          "Initial Stock Quantity:", min_value=0, step=1, value=25
+      )
+
+      if st.button("Commit to Amazon RDS Database"):
+        if sku and name:
+          with st.spinner("Writing to Amazon RDS MySQL instance..."):
+            success = db_manager.add_product(
+                sku=sku,
+                name=name,
+                category=category,
+                price=price,
+                stock=stock,
+            )
+            if success:
+              st.success(
+                  f"🎉 Asset **{name}** successfully committed to RDS!"
+              )
+            else:
+              st.error(
+                  "❌ Database Write Failure: Check your connection settings or"
+                  " duplicate SKU entries."
+              )
         else:
-            st.info("ℹ️ No active inventory records found in RDS database table `products`.")
+          st.warning(
+              "⚠️ Validation Warning: Please fill in both the SKU and Product"
+              " Name."
+          )
 
-    st.markdown("---")
-    st.subheader("Regional Pricing Calculator (Day 7 Conditional Control Logic)")
-    col_reg1, col_reg2 = st.columns(2)
-    with col_reg1:
-        target_market = st.selectbox("Target Logistics Market Destination:", ["London", "New York", "Barcelona"])
-    with col_reg2:
-        tax_rate = 0.20 if target_market == "London" else 0.15
-        st.metric(f"Computed Tax Rate for {target_market}", f"{tax_rate*100}%")
+  # --- DISPLAY: FETCH LIVE INVENTORY FROM AMAZON RDS ---
+  with col_display:
+    st.subheader("Amazon RDS Live Inventory Table")
+
+    products = db_manager.get_all_products()
+
+    if products:
+      df_inv = pd.DataFrame(products)
+
+      # Reorder display columns cleanly if present
+      expected_cols = [
+          "id",
+          "sku",
+          "name",
+          "category",
+          "price",
+          "stock",
+          "created_at",
+      ]
+      display_cols = [c for c in expected_cols if c in df_inv.columns]
+      if display_cols:
+        df_inv = df_inv[display_cols]
+
+        st.dataframe(df_inv, use_container_width=True)
+
+        # Live RDS Financial Telemetry
+        m_col1, m_col2, m_col3 = st.columns(3)
+        m_col1.metric("Unique Records", len(products))
+
+        if "stock" in df_inv.columns:
+          total_stock = df_inv["stock"].sum()
+          m_col2.metric("Total Items Stocked", int(total_stock))
+
+        if "price" in df_inv.columns and "stock" in df_inv.columns:
+          total_val = (df_inv["price"] * df_inv["stock"]).sum()
+          m_col3.metric("Inventory Valuation", f"${total_val:,.2f}")
+    else:
+      st.info(
+          "ℹ️ No active inventory records found in RDS database table"
+          " `products`."
+      )
+
+  st.markdown("---")
+  st.subheader("Regional Pricing Calculator (Day 7 Conditional Control Logic)")
+  col_reg1, col_reg2 = st.columns(2)
+  with col_reg1:
+    target_market = st.selectbox(
+        "Target Logistics Market Destination:", ["London", "New York", "Barcelona"]
+    )
+  with col_reg2:
+    tax_rate = 0.20 if target_market == "London" else 0.15
+    st.metric(f"Computed Tax Rate for {target_market}", f"{tax_rate*100}%")
 
 # ==========================================
 # 9. PAGE 6: GEMINI AI PORTFOLIO COPILOT
 # ==========================================
 elif choice == "🤖 Gemini AI":
-    st.title("🤖 Gemini Intelligent Portfolio Assistant")
-    st.markdown("Ask anything about Yamin's technical expertise, historical project frameworks, or global DevOps industry benchmarks.")
+  st.title("🤖 Gemini Intelligent Portfolio Assistant")
+  st.markdown(
+      "Ask anything about Yamin's technical expertise, historical project"
+      " frameworks, or global DevOps industry benchmarks."
+  )
 
-    query = st.text_input(
-        "Ask about Yamin's career or DevOps industry data:", 
-        placeholder="e.g., What is the average hourly rate for a DevOps engineer in the US? or What projects did Yamin build?"
-    )
+  query = st.text_input(
+      "Ask about Yamin's career or DevOps industry data:",
+      placeholder=(
+          "e.g., What is the average hourly rate for a DevOps engineer in the"
+          " US? or What projects did Yamin build?"
+      ),
+  )
 
-    if st.button("Query Portfolio Brain"):
-        if query:
-            q_lower = query.lower()
-            with st.spinner("Analyzing custom portfolio intelligence layers..."):
-                st.markdown("### 💡 Copilot Analysis Response")
-                with st.container(border=True):
-                    
-                    if any(word in q_lower for word in ["qualification", "experience", "who is yamin", "skills"]):
-                        st.write("### 🥇 Yamin's Professional Summary")
-                        st.write("""
+  if st.button("Query Portfolio Brain"):
+    if query:
+      q_lower = query.lower()
+      with st.spinner("Analyzing custom portfolio intelligence layers..."):
+        st.markdown("### 💡 Copilot Analysis Response")
+        with st.container(border=True):
+
+          if any(
+              word in q_lower
+              for word in ["qualification", "experience", "who is yamin", "skills"]
+          ):
+            st.write("### 🥇 Yamin's Professional Summary")
+            st.write("""
                         Yamin is a seasoned Cloud DevOps & Infrastructure Engineer with **over 10 years of cross-functional experience** 
                         spanning enterprise cloud setups, technical help desk architecture, database engineering, and global mobility platforms.
                         He combines foundational system skills like Cisco CCNA networking with modern automated cloud paradigms.
                         """)
-                        
-                    elif any(word in q_lower for word in ["project", "build", "do for me", "completed"]):
-                        st.write("### 🛠️ Production Systems Architecture")
-                        st.write("""
+
+          elif any(
+              word in q_lower
+              for word in ["project", "build", "do for me", "completed"]
+          ):
+            st.write("### 🛠️ Production Systems Architecture")
+            st.write("""
                         Yamin has engineered and deployed several notable systems showcased inside this unified production environment:
                         1. **Secure DevOps Portal Core:** Hosted natively on an AWS EC2 instance with safe parameter storage routing.
                         2. **Live Telemetry Interface:** Integrates Python kernel utilities (`psutil`) to display live server performance metrics directly on a dashboard layer.
                         3. **Inventory Management System:** Fully integrated with Amazon RDS MySQL to persist warehouse assets and track real-time telemetry.
                         """)
-                    
-                    elif any(word in q_lower for word in ["salary", "rate", "pay", "earn"]):
-                        st.write("### 📊 Global Industry Insights & Benchmarks")
-                        st.write("""
+
+          elif any(word in q_lower for word in ["salary", "rate", "pay", "earn"]):
+            st.write("### 📊 Global Industry Insights & Benchmarks")
+            st.write("""
                         Based on market telemetry across the United States for an experienced **Cloud DevOps / Infrastructure Engineer** in 2026:
                         * **Estimated Contract Hourly Rate:** $65 – $95+ per hour depending on configuration scale, security clearing, and enterprise infrastructure tier.
                         * **Key Drivers:** Proficiency in Infrastructure as Code (IaC), zero-downtime application deployments, and automated secrets monitoring.
                         """)
-                        
-                    elif any(word in q_lower for word in ["devops", "aws", "python", "nginx"]):
-                        st.write("### ☁️ Domain Technical Architecture")
-                        st.write("""
-                        Modern operational infrastructure emphasizes loose coupling, containerization, reverse proxy performance, 
-                        and secure automated cryptographic key rotation. Shifting secret variables from code blocks into protected configurations 
-                        removes single points of systemic attack vectors.
-                        """)
-                        
-                    elif any(word in q_lower for word in ["married", "single", "live", "age", "phone", "personal"]):
-                        st.warning("⚠️ Guardrail Information Boundary Restriction")
-                        st.write("As a Yamin AI Agent, I don't expose private personal information. My design protocol restricts knowledge exploration strictly to his professional cloud infrastructure and enterprise history.")
-                        
-                    else:
-                        st.info("🌐 Scope Boundary Notice")
-                        st.write("This query is currently outside the domain index parameters of the system. Try checking for data records on Yamin's engineering portfolio system, AWS services integration, or programming milestones.")
-        else:
-            st.warning("Please provide a search query before launching evaluation metrics.")
 
-# ==========================================
-# 10. PAGE 7: CONTACT & OPPORTUNITIES ENGINE
-# ==========================================
-elif choice == "📬 Contact":
-    st.title("📬 Connect With Yamin")
-    st.markdown("Drop a line regarding consulting contracts, full-time engineering opportunities, or general architectural inquiries.")
-    
-    with st.container(border=True):
-        st.subheader("Professional Contact Form Node")
-        
-        with st.form("contact_form", clear_on_submit=True):
-            full_name = st.text_input("Full Name *")
-            reply_email = st.text_input("Email Address *")
-            phone_num = st.text_input("Telephone Number *")
-            
-            reason = st.selectbox("Reason for Contact (Optional)", [
-                "Contract / Consulting Opportunity",
-                "Full-Time Employment Inquiry",
-                "Technical Project Collaboration",
-                "General Networking"
-            ])
-            
-            message_body = st.text_area("Message Details *")
-            submit_button = st.form_submit_button("Submit Inquiry")
-            
-            if submit_button:
-                if not full_name or not reply_email or not message_body:
-                    st.error("❌ Configuration Error: Please fulfill all required parameters marked with (*).")
-                elif "@" not in reply_email:
-                    st.error("❌ Validation Error: Invalid syntax detected inside the string of your Email Address field.")
-                else:
-                    # 1. PERSIST RECORD TO AMAZON RDS DATABASE
-                    full_message = f"Phone: {phone_num}\nReason: {reason}\n\nDetails:\n{message_body}"
-                    db_saved = db_manager.save_contact_message(
-                        name=full_name, 
-                        email=reply_email, 
-                        subject=reason, 
-                        message=full_message
-                    )
-                    
-                    if db_saved:
-                        st.info("💾 Message record committed to Amazon RDS MySQL database.")
-                    else:
-                        st.warning("⚠️ Unable to persist record to Amazon RDS.")
-
-                    # 2. SMTP EMAIL TRANSMISSION PIPELINE
-                    SMTP_SERVER = os.getenv("SMTP_SERVER")
-                    SMTP_PORT = int(os.getenv("SMTP_PORT", 465))
-                    SENDER_EMAIL = os.getenv("SENDER_EMAIL")
-                    SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
-                    RECEIVER_EMAIL = os.getenv("RECEIVER_EMAIL")
-                    
-                    msg = MIMEMultipart()
-                    msg['From'] = SENDER_EMAIL
-                    msg['To'] = RECEIVER_EMAIL
-                    msg['Reply-To'] = reply_email
-                    msg['Subject'] = f"🎯 New AWS Portal Inquiry from {full_name}"
-                    
-                    email_content = f"""
-                    Hello Yamin,
-
-                    A new professional inquiry has been transmitted directly from your AWS Portfolio Portal.
-
-                    --- FORM DATA SUBMISSION ---
-                    Name: {full_name}
-                    Email Address: {reply_email}
-                    Phone Number: {phone_num}
-                    Category Selection: {reason}
-                    
-                    Message Details:
-                    {message_body}
-                    ----------------------------
-                    
-                    Deployment Host: AWS EC2 Ubuntu / Amazon RDS Integrated
-                    """
-                    msg.attach(MIMEText(email_content, 'plain'))
-                    
-                    try:
-                        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
-                            server.login(SENDER_EMAIL, SENDER_PASSWORD)
-                            server.sendmail(SENDER_EMAIL, [RECEIVER_EMAIL], msg.as_string())
-                        
-                        st.success(f"🎉 Inquiry Submitted Successfully! Message stored in RDS & sent to inbox.")
-                        st.balloons()
-                        
-                    except Exception as e:
-                        st.error(f"❌ Server SMTP Transmission Failure Network Event Exception: {str(e)}")
-
-# ==========================================
-# 11. FOOTER & GLOBAL CLOSURE
-# ==========================================
-st.markdown("---")
-col_f1, col_f2 = st.columns([1, 1])
-with col_f1:
-    st.caption("Developed by Yamin | Cloud DevOps Engineering Validation Path")
-with col_f2:
-    st.caption(f"Last System Update Sync Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+          elif any(
+              word in q_lower for word in ["devops", "aws", "python", "nginx"]
+          ):
+            st.write("### ☁️ Domain Technical Architecture")
+            st.write(
+                "Modern operational infrastructure emphasizes loose coupling,"
+                " containerization, reverse proxy performance, \n and secure"
+                " automated cryptographic key rotation. Shifting secret"
+                " variables from code blocks into protected configurations"
+                " \n removes single points of failure."
+            )
