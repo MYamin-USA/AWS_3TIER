@@ -1,5 +1,21 @@
+# Environment & Secrets
 .env
-.venv
+*/.env
+secrets/
+
+# Python Virtual Environments & Cache
+.venv/
+env/
 __pycache__/
+*.py[cod]
+*$py.class
+
+# SSH Keys & Credentials
 *.pem
+id_rsa*
 .aws/
+
+# IDE & OS Specific
+.vscode/
+.DS_Store
+Thumbs.db
