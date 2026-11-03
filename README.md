@@ -84,9 +84,4 @@ Yamin
 
 Cloud & DevOps Solutions Architect | Freelance Cloud Engineering Consultant
 
-👤 Author
-Yamin
-
-Cloud & DevOps Solutions Architect | Freelance Cloud Engineering Consultant
-
 [LinkedIn Profile](https://www.linkedin.com/in/md-y-55b219123) | [GitHub Profile](https://github.com/MYamin-USA)
