@@ -1,3 +1,4 @@
+Markdown
 # Enterprise Cloud DevOps Portfolio Portal
 
 An interactive, production-ready Cloud & DevOps portfolio application built with **Python (Streamlit)**, containerized with **Docker**, and architected for scalable cloud deployment on **AWS EC2** with **Amazon RDS** backend integration.
@@ -29,7 +30,6 @@ An interactive, production-ready Cloud & DevOps portfolio application built with
 ├── inventory_system.py     # Core logic module for inventory management
 └── requirements.txt        # Python package dependencies
 
-
 🔒 Security & Best Practices
 Decoupled Secrets: Environment variables, database credentials, and access tokens are strictly isolated using .env files and excluded from version control via .gitignore and .dockerignore.
 
@@ -43,8 +43,8 @@ If you would like to run or test this portfolio application locally on your mach
 Clone the repository:
 
 Bash
-git clone [https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME.git](https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME.git)
-cd YOUR_REPOSITORY_NAME
+git clone [https://github.com/MYamin-USA/AWS_3TIER.git](https://github.com/MYamin-USA/AWS_3TIER.git)
+cd AWS_3TIER
 Create and activate a virtual environment:
 
 Bash
@@ -78,6 +78,11 @@ Run the container:
 Bash
 docker run -p 8080:8080 --env-file .env cloud-portfolio-app
 Open your browser and navigate to http://localhost:8080.
+
+👤 Author
+Yamin
+
+Cloud & DevOps Solutions Architect | Freelance Cloud Engineering Consultant
 
 👤 Author
 Yamin
